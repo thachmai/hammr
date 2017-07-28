@@ -14,8 +14,12 @@
 #    under the License.
 
 from setuptools import setup,find_packages,Command
+from distutils.command.sdist import sdist
+#from distutils.command.bdist_wininst import bdist_wininst
+#from setuptools.command.bdist_egg import bdist_egg
 from hammr.utils.constants import *
 import os
+import datetime
 
 
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -51,6 +55,22 @@ class CleanCommand(Command):
         os.system('rm -vrf '+ROOT_DIR+'/build '+ROOT_DIR+'/dist '+ROOT_DIR+'/*.pyc '+ROOT_DIR+'/*.egg-info')
         os.system('find '+ROOT_DIR+' -iname "*.pyc" -exec rm {} +')
 
+class sdist_dev(sdist):
+    """Custom sdist class that takes into account dev build."""
+    user_options = sdist.user_options + [
+            ('dev', None, "Add a dev marker")
+            ]
+
+    def initialize_options(self):
+        sdist.initialize_options(self)
+        self.dev = 0
+
+    def run(self):
+        if self.dev:
+            suffix = '.dev' + datetime.date.today().strftime("%Y%m%d")
+            self.distribution.metadata.version += suffix
+        sdist.run(self)
+
 setup (  
 
   install_requires=requires,
@@ -85,6 +105,7 @@ setup (
   # ... custom build command
     cmdclass={
         'clean': CleanCommand,
+        'sdist': sdist_dev
     },
 
   #long_description= 'Long description of the package',
